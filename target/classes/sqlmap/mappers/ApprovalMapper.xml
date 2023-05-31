@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cmn.service.impl.ApprovalMapper">
+
+	<resultMap id="ApprovalResultMap" type="com.cmn.service.ApprovalVO">
+		<result property="id" 						column="DOCUMENT_CODE"/>
+		<result property="formClassifyCode" 		column="FORM_CLASSIFY_CODE"/>
+		<result property="documentStatus" 			column="DOCUMENT_STATUS"/>
+		<result property="contents" 				column="CONTENTS"/>
+		<result property="approvalLineDetail" 		column="APPROVAL_LINE_DETAIL"/>
+		<result property="employeeNumberDetail" 	column="EMPLOYEE_NUMBER_DETAIL"/>
+		<result property="title" 					column="TITLE"/>
+		<result property="attachmentPath" 			column="ATTACHMENT_PATH"/>
+		<result property="remark" 					column="REMARK"/>
+		<result property="registrant" 				column="REGISTRANT"/>
+		<result property="registDate" 				column="REGIST_DATE"/>
+		<result property="modifier" 				column="MODIFIER"/>
+		<result property="modifyDate" 				column="MODIFY_DATE"/>
+	</resultMap>
+	
+	<resultMap id="DocumentResultMap" type="com.cmn.service.DocumentVO">
+		<result property="id" 					column="FORM_CODE"/>
+		<result property="documentVerifyCode" 	column="DOCUMENT_VERIFY_CODE"/>
+		<result property="formName" 			column="FORM_NAME"/>
+		<result property="formSrc" 				column="FORM_SRC" jdbcType="CLOB" javaType="java.lang.String"/>
+		<result property="useYN" 				column="USE_YN"/>
+		<result property="registrant" 			column="REGISTRANT"/>
+		<result property="registDate" 			column="REGIST_DATE"/>
+		<result property="modifier" 			column="MODIFIER"/>
+		<result property="modifyDate" 			column="MODIFY_DATE"/>
+	</resultMap>
+	
+	<resultMap id="ApprovalLineResultMap" type="com.cmn.service.ApprovalLineVO">
+		<result property="id" 						column="APPROVAL_LINE_NUMBER"/>
+		<result property="approvalLineName" 		column="APPROVAL_LINE_NAME"/>
+		<result property="approvalLineDetail" 		column="APPROVAL_LINE_DETAIL"/>
+		<result property="employeeNumberDetail" 	column="EMPLOYEE_NUMBER_DETAIL"/>
+		<result property="registrant" 				column="REGISTRANT"/>
+		<result property="registDate" 				column="REGIST_DATE"/>
+		<result property="modifier" 				column="MODIFIER"/>
+		<result property="modifyDate" 				column="MODIFY_DATE"/>
+	</resultMap>
+	
+	<resultMap id="ApprovalStageResultMap" type="com.cmn.service.ApprovalStageVO">
+		<result property="id" 				column="DOCUMENT_CODE"/>
+		<result property="approval" 		column="APPROVAL"/>
+		<result property="nowStep" 			column="NOW_STEP"/>
+		<result property="approvalResult" 	column="APPROVAL_RESULT"/>
+		<result property="approvalStep" 	column="APPROVAL_STEP"/>
+		<result property="approvalDate" 	column="APPROVAL_DATE"/>
+		<result property="opinion" 			column="OPINION"/>
+		<result property="registrant" 		column="REGISTRANT"/>
+		<result property="registDate" 		column="REGIST_DATE"/>
+		<result property="modifier" 		column="MODIFIER"/>
+		<result property="modifyDate" 		column="MODIFY_DATE"/>
+	</resultMap>
+
+	<select id="getTotalApproval" resultMap="ApprovalResultMap">
+		-- 전체결재내역 조회
+		SELECT
+			DOCUMENT_CODE,
+			FORM_CLASSIFY_CODE,
+			DOCUMENT_STATUS,
+			CONTENTS,
+			APPROVAL_LINE_DETAIL,
+			TITLE,
+			ATTACHMENT_PATH,
+			REMARK,
+			REGISTRANT,
+			TO_CHAR(REGIST_DATE,'YYYY-MM-DD') AS REGIST_DATE,
+			MODIFIER,
+			TO_CHAR(MODIFY_DATE,'YYYY-MM-DD') AS MODIFY_DATE
+		FROM
+			TB_APPROVAL_DOCUMENT
+		ORDER BY DOCUMENT_CODE
+	</select>
+
+	<select id="getReceptApproval" resultMap="ApprovalResultMap">
+		-- 수신결재내역 조회
+		SELECT
+			d.DOCUMENT_CODE,
+			f.FORM_NAME AS FORM_CLASSIFY_CODE,
+			s.NOW_STEP AS nowStep,
+		 	CASE 
+            WHEN s.NOW_STEP = '결재 완료' THEN 
+            (CASE WHEN d.DOCUMENT_STATUS = '승인' THEN '승인'
+                  WHEN d.DOCUMENT_STATUS = '반려' THEN '반려' END)
+            ELSE s.APPROVAL_RESULT END AS DOCUMENT_STATUS,
+            d.DOCUMENT_STATUS AS totalStatus,
+			d.CONTENTS,
+			d.APPROVAL_LINE_DETAIL,
+			d.TITLE,
+			d.ATTACHMENT_PATH,
+			d.REMARK,
+			e.EMPLOYEE_FULL_NAME AS writer,
+			t.DEPT_NAME AS writerDept,
+			c.CODE_NAME AS writerRank,
+			d.REGISTRANT,
+			TO_CHAR(d.REGIST_DATE,'YYYY-MM-DD') AS REGIST_DATE,
+			d.MODIFIER,
+			TO_CHAR(d.MODIFY_DATE,'YYYY-MM-DD') AS MODIFY_DATE
+		FROM
+			TB_APPROVAL_DOCUMENT d
+		INNER JOIN
+			TB_APPROVAL_STAGE s
+		ON d.DOCUMENT_CODE = s.DOCUMENT_CODE
+		INNER JOIN
+			TB_EMPLOYEE e
+		ON e.EMPLOYEE_NUMBER = d.REGISTRANT
+		INNER JOIN
+			TB_DEPT t
+		ON e.EMPLOYEE_DEPT = t.DEPT_CODE
+		INNER JOIN
+			TB_COMMON_CODE c
+		ON e.EMPLOYEE_RANK = c.COMMON_CODE
+		INNER JOIN
+			TB_DOCUMENT_FORM f
+		ON f.FORM_CODE = d.FORM_CLASSIFY_CODE
+		WHERE s.APPROVAL = #{id}
+		ORDER BY DOCUMENT_CODE
+	</select>
+	
+	
+	<select id="getReceptSearch" resultMap="ApprovalResultMap">
+		-- 수신결재내역 검색
+		SELECT
+			d.DOCUMENT_CODE,
+			f.FORM_NAME AS FORM_CLASSIFY_CODE,
+			s.NOW_STEP AS nowStep,
+			CASE 
+            WHEN s.NOW_STEP = '결재 완료' THEN 
+            (CASE WHEN d.DOCUMENT_STATUS = '승인' THEN '승인'
+                  WHEN d.DOCUMENT_STATUS = '반려' THEN '반려' END)
+            ELSE s.APPROVAL_RESULT END AS DOCUMENT_STATUS,
+			d.CONTENTS,
+			d.APPROVAL_LINE_DETAIL,
+			d.TITLE,
+			d.ATTACHMENT_PATH,
+			d.REMARK,
+			e.EMPLOYEE_FULL_NAME AS writer,
+			t.DEPT_NAME AS writerDept,
+			c.CODE_NAME AS writerRank,
+			d.REGISTRANT,
+			TO_CHAR(d.REGIST_DATE,'YYYY-MM-DD') AS REGIST_DATE,
+			d.MODIFIER,
+			TO_CHAR(d.MODIFY_DATE,'YYYY-MM-DD') AS MODIFY_DATE
+		FROM
+			TB_APPROVAL_DOCUMENT d
+		INNER JOIN
+			TB_APPROVAL_STAGE s
+		ON d.DOCUMENT_CODE = s.DOCUMENT_CODE
+		INNER JOIN
+			TB_EMPLOYEE e
+		ON e.EMPLOYEE_NUMBER = d.REGISTRANT
+		INNER JOIN
+			TB_DEPT t
+		ON e.EMPLOYEE_DEPT = t.DEPT_CODE
+		INNER JOIN
+			TB_COMMON_CODE c
+		ON e.EMPLOYEE_RANK = c.COMMON_CODE
+		INNER JOIN
+			TB_DOCUMENT_FORM f
+		ON f.FORM_CODE = d.FORM_CLASSIFY_CODE
+		WHERE s.APPROVAL = #{id}
+		  AND d.FORM_CLASSIFY_CODE LIKE '%' || #{fm} || '%'
+		  AND s.APPROVAL_RESULT LIKE '%' || #{st} || '%'
+		  AND e.EMPLOYEE_FULL_NAME LIKE '%' || #{nm} || '%'
+		  AND t.DEPT_CODE LIKE '%' || #{dp} || '%'
+		  AND d.REGIST_DATE BETWEEN TO_DATE(#{dt1})
+		  AND TO_DATE(#{dt2})
+		ORDER BY DOCUMENT_CODE
+	</select>
+	
+	<select id="getRequestApproval" resultMap="ApprovalResultMap">
+		-- 발신결재내역 조회
+		SELECT
+			d.DOCUMENT_CODE,
+			f.FORM_NAME AS FORM_CLASSIFY_CODE,
+			d.DOCUMENT_STATUS,
+			d.CONTENTS,
+			d.APPROVAL_LINE_DETAIL,
+			d.TITLE,
+			d.ATTACHMENT_PATH,
+			d.REMARK,
+			e.EMPLOYEE_FULL_NAME AS writer,
+			t.DEPT_NAME AS writerDept,
+			c.CODE_NAME AS writerRank,
+			d.REGISTRANT,
+			TO_CHAR(d.REGIST_DATE,'YYYY-MM-DD') AS REGIST_DATE,
+			d.MODIFIER,
+			TO_CHAR(d.MODIFY_DATE,'YYYY-MM-DD') AS MODIFY_DATE
+		FROM
+			TB_APPROVAL_DOCUMENT d
+		INNER JOIN
+			TB_EMPLOYEE e
+		ON e.EMPLOYEE_NUMBER = d.REGISTRANT
+		INNER JOIN
+			TB_DEPT t
+		ON e.EMPLOYEE_DEPT = t.DEPT_CODE
+		INNER JOIN
+			TB_COMMON_CODE c
+		ON e.EMPLOYEE_RANK = c.COMMON_CODE
+		INNER JOIN
+			TB_DOCUMENT_FORM f
+		ON f.FORM_CODE = d.FORM_CLASSIFY_CODE
+		WHERE d.REGISTRANT = #{id}
+		ORDER BY DOCUMENT_CODE
+	</select>
+	
+	<select id="getRequsetSearch" resultMap="ApprovalResultMap">
+		-- 발신결재내역 검색
+		SELECT
+			d.DOCUMENT_CODE,
+			f.FORM_NAME AS FORM_CLASSIFY_CODE,
+			d.DOCUMENT_STATUS,
+			d.CONTENTS,
+			d.APPROVAL_LINE_DETAIL,
+			d.TITLE,
+			d.ATTACHMENT_PATH,
+			d.REMARK,
+			d.REGISTRANT,
+			TO_CHAR(d.REGIST_DATE,'YYYY-MM-DD') AS REGIST_DATE,
+			d.MODIFIER,
+			TO_CHAR(d.MODIFY_DATE,'YYYY-MM-DD') AS MODIFY_DATE
+		FROM
+			TB_APPROVAL_DOCUMENT d
+		INNER JOIN
+			TB_DOCUMENT_FORM f
+		ON f.FORM_CODE = d.FORM_CLASSIFY_CODE
+		WHERE d.REGISTRANT = #{id}
+		  AND d.FORM_CLASSIFY_CODE LIKE '%' || #{fm} || '%'
+		  AND d.DOCUMENT_STATUS LIKE '%' || #{st} || '%'
+		  AND d.APPROVAL_LINE_DETAIL LIKE '%' || #{nm} || '%'
+		  AND d.TITLE LIKE '%' || #{tt} || '%'
+		  AND d.REGIST_DATE BETWEEN TO_DATE(#{dt1})
+		  AND TO_DATE(#{dt2})
+		ORDER BY DOCUMENT_CODE
+	</select>
+	
+	<select id="getApprovalForm" resultMap="DocumentResultMap">
+		-- 결재양식 조회
+		SELECT
+			c.CODE_NAME AS DOCUMENT_VERIFY_CODE,
+			f.FORM_CODE,
+			f.FORM_NAME,
+			f.FORM_SRC,
+			f.USE_YN,
+			f.REGISTRANT,
+			TO_CHAR(f.REGIST_DATE,'YYYY-MM-DD') AS REGIST_DATE,
+			f.MODIFIER,
+			TO_CHAR(f.MODIFY_DATE,'YYYY-MM-DD') AS MODIFY_DATE
+		FROM
+			TB_DOCUMENT_FORM f
+		INNER JOIN
+			TB_COMMON_CODE c
+		ON f.DOCUMENT_VERIFY_CODE = c.COMMON_CODE
+		ORDER BY f.FORM_CODE
+	</select>
+	
+	<select id="getApprovalLine" resultMap="ApprovalLineResultMap">
+		-- 결재선 조회
+		SELECT
+			APPROVAL_LINE_NUMBER,
+			APPROVAL_LINE_NAME,
+			APPROVAL_LINE_DETAIL,
+			EMPLOYEE_NUMBER_DETAIL,
+			REGISTRANT,
+			TO_CHAR(REGIST_DATE,'YYYY-MM-DD') AS REGIST_DATE,
+			MODIFIER,
+			TO_CHAR(MODIFY_DATE,'YYYY-MM-DD') AS MODIFY_DATE
+		FROM 
+			TB_APPROVAL_LINE
+		WHERE 
+			APPROVAL_LINE_NUMBER = '1' OR
+            REGISTRANT = #{registrant}
+		ORDER BY APPROVAL_LINE_NUMBER
+	</select>
+	
+	<insert id="regApprovalLine">
+		-- 결재선 추가
+		INSERT INTO TB_APPROVAL_LINE(
+		    APPROVAL_LINE_NUMBER,
+			APPROVAL_LINE_NAME,
+			APPROVAL_LINE_DETAIL,
+			EMPLOYEE_NUMBER_DETAIL,
+			REGISTRANT,
+			REGIST_DATE,
+			MODIFIER,
+			MODIFY_DATE
+		)VALUES(
+		    #{id},
+		    #{approvalLineName},
+		    #{approvalLineDetail},
+		    #{employeeNumberDetail},
+		    #{registrant},
+		    TRUNC(SYSDATE),
+		    #{registrant},
+		    TRUNC(SYSDATE)
+		)
+	</insert>
+	
+	<delete id="deleteApprovalLine">
+		DELETE FROM TB_APPROVAL_LINE
+		WHERE APPROVAL_LINE_NUMBER = #{id}
+	</delete>
+	
+	<insert id="regApprovalDocument">
+		-- 결재문서 추가
+		INSERT INTO TB_APPROVAL_DOCUMENT(
+		    DOCUMENT_CODE,
+			FORM_CLASSIFY_CODE,
+			DOCUMENT_STATUS,
+			CONTENTS,
+			APPROVAL_LINE_DETAIL,
+			EMPLOYEE_NUMBER_DETAIL,
+			TITLE,
+			ATTACHMENT_PATH,
+			REMARK,
+			REGISTRANT,
+			REGIST_DATE,
+			MODIFIER,
+			MODIFY_DATE
+		)VALUES(
+		    #{id},
+		    #{formClassifyCode},
+		    '결재상신',
+		    #{contents},
+		    #{approvalLineDetail},
+		    #{employeeNumberDetail},
+		    #{title},
+		    #{attachmentPath},
+		    #{remark},
+		    #{registrant},
+		    TRUNC(SYSDATE),
+		    #{registrant},
+		    TRUNC(SYSDATE)
+		)
+	</insert>
+	
+	<insert id="regApprovalStage">
+		-- 결재단계 추가
+		INSERT INTO TB_APPROVAL_STAGE(
+		    DOCUMENT_CODE,
+			APPROVAL,
+			NOW_STEP,
+			APPROVAL_RESULT,
+			APPROVAL_STEP,
+			APPROVAL_DATE,
+			OPINION,
+			REGISTRANT,
+			REGIST_DATE,
+			MODIFIER,
+			MODIFY_DATE
+		)VALUES(
+		    #{id},
+		    #{approval},
+		    '1',
+		    '미결재',
+		    #{step},
+		    '',
+		    '',
+		    #{registrant},
+		    TRUNC(SYSDATE),
+		    #{registrant},
+		    TRUNC(SYSDATE)
+		)
+	</insert>
+	
+	
+	<select id="getApprovalStage" resultMap="ApprovalStageResultMap">
+		-- 결재단계 조회
+		SELECT
+			s.DOCUMENT_CODE,
+			s.APPROVAL,
+			e.EMPLOYEE_FULL_NAME AS approvalName,
+			c.CODE_NAME AS approvalRank,
+			s.NOW_STEP,
+			s.APPROVAL_RESULT,
+			s.APPROVAL_STEP,
+			s.APPROVAL_DATE,
+			s.OPINION,
+			s.REGISTRANT,
+			TO_CHAR(s.REGIST_DATE,'YYYY-MM-DD') AS REGIST_DATE,
+			s.MODIFIER,
+			TO_CHAR(s.MODIFY_DATE,'YYYY-MM-DD') AS MODIFY_DATE
+		FROM
+			TB_APPROVAL_STAGE s
+		INNER JOIN 
+			TB_EMPLOYEE e
+		ON e.EMPLOYEE_NUMBER = s.APPROVAL
+		INNER JOIN
+			TB_COMMON_CODE c
+		ON e.EMPLOYEE_RANK = c.COMMON_CODE
+		WHERE s.DOCUMENT_CODE = #{id}
+		ORDER BY s.APPROVAL_STEP
+	</select>
+	
+	<update id="changeMyState">
+		-- 본인 상태 변경
+		UPDATE TB_APPROVAL_STAGE
+		SET 
+			APPROVAL_RESULT = '승인',
+			APPROVAL_DATE = TRUNC(SYSDATE),
+			OPINION = #{opinion}
+		WHERE DOCUMENT_CODE = #{id} AND APPROVAL = #{approval}
+	</update>
+	
+	<update id="changeAllState">
+		-- 전체 결재단계 변경(진행중)
+		UPDATE TB_APPROVAL_STAGE
+		SET 
+			NOW_STEP = NOW_STEP + 1,
+			MODIFIER = #{approval},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DOCUMENT_CODE = #{id}
+	</update>
+	
+	<update id="changeAllStateEnd">
+		-- 전체 결재단계 변경(승인)
+		UPDATE TB_APPROVAL_STAGE
+		SET 
+			NOW_STEP = '결재 완료',
+			MODIFIER = #{approval},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DOCUMENT_CODE = #{id}
+	</update>
+	
+	<update id="changeRequestState">
+		-- 발신목록 결재상태 변경(진행중)
+		UPDATE TB_APPROVAL_DOCUMENT
+		SET 
+			DOCUMENT_STATUS = '결재진행중',
+			MODIFIER = #{approval},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DOCUMENT_CODE = #{id}
+	</update>
+	
+	<update id="changeRequestStateEnd">
+		-- 발신목록 결재상태 변경(승인)
+		UPDATE TB_APPROVAL_DOCUMENT
+		SET 
+			DOCUMENT_STATUS = '승인',
+			MODIFIER = #{approval},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DOCUMENT_CODE = #{id}
+	</update>
+	
+	<update id="changeMyStateReject">
+		-- 본인 상태 변경(반려)
+		UPDATE TB_APPROVAL_STAGE
+		SET 
+			APPROVAL_RESULT = '반려',
+			APPROVAL_DATE = TRUNC(SYSDATE),
+			OPINION = #{opinion}
+		WHERE DOCUMENT_CODE = #{id} AND APPROVAL = #{approval}
+	</update>
+	
+	<update id="changeAllStateReject">
+		-- 전체 결재단계 변경(반려)
+		UPDATE TB_APPROVAL_STAGE
+		SET 
+			NOW_STEP = '결재 완료',
+			MODIFIER = #{approval},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DOCUMENT_CODE = #{id}
+	</update>
+	
+	<update id="changeRequestStateReject">
+		-- 발신목록 결재상태 변경(반려)
+		UPDATE TB_APPROVAL_DOCUMENT
+		SET 
+			DOCUMENT_STATUS = '반려',
+			MODIFIER = #{approval},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DOCUMENT_CODE = #{id}
+	</update>
+	
+</mapper>	 

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cmn.service.impl.CodeMapper">
+
+	<resultMap id="code" type="com.cmn.service.CodeVO">
+	</resultMap>
+
+	<select id="selectAcodeList" resultMap="code">
+		select
+		PERIOD,
+		COMMON_CODE,
+		COMMON_CODE as id,
+		UPPER_COMMON_CODE,
+		CODE_NAME,
+		CODE_DESCRIPTION,
+		USE_YN,
+		DELETE_YN,
+		REGISTRANT,
+		TO_CHAR(REGIST_DATE,'YYYY-MM-DD') AS
+		REGIST_DATE,
+		MODIFIER,
+		to_char(MODIFY_DATE,'YYYYY-MM-DD') AS MODIFY_DATE
+		from
+		tb_common_code
+		WHERE DELETE_YN != 'Y' order by
+		PERIOD
+	</select>
+
+	<select id="selectUcodeList"
+		parameterType="com.cmn.service.CodeVO" resultMap="code">
+		select
+		PERIOD,
+		COMMON_CODE,
+		COMMON_CODE as id,
+		TO_CHAR(SYSDATE,'HH24:MI:SS') || ':' ||
+		TO_CHAR(SYSTIMESTAMP,'FF1') as nowdate,
+		UPPER_COMMON_CODE,
+		CODE_NAME,
+		CODE_DESCRIPTION,
+		USE_YN,
+		DELETE_YN,
+		REGISTRANT,
+		TO_CHAR(REGIST_DATE,'YYYY-MM-DD') AS
+		REGIST_DATE,
+		MODIFIER,
+		to_char(MODIFY_DATE,'YYYYY-MM-DD') AS MODIFY_DATE
+		from
+		tb_common_code
+		WHERE upper_common_code IS NULL AND DELETE_YN != 'Y'
+		AND
+		COMMON_CODE
+		LIKE '%${COMMON_CODE}%' AND
+		CODE_NAME LIKE
+		'%${CODE_NAME}%' AND
+		USE_YN
+		LIKE '%${USE_YN}%'
+		order by
+		PERIOD
+	</select>
+
+	<select id="selectCcodeList"
+		parameterType="com.cmn.service.CodeVO" resultMap="code">
+		select
+		PERIOD,
+		COMMON_CODE,
+		COMMON_CODE as id,
+		TO_CHAR(SYSDATE,'HH24:MI:SS') || ':' ||
+		TO_CHAR(SYSTIMESTAMP,'FF1') as nowdate,
+		UPPER_COMMON_CODE,
+		CODE_NAME,
+		CODE_DESCRIPTION,
+		USE_YN,
+		DELETE_YN,
+		REGISTRANT,
+		TO_CHAR(REGIST_DATE,'YYYY-MM-DD') AS
+		REGIST_DATE,
+		MODIFIER,
+		to_char(MODIFY_DATE,'YYYYY-MM-DD') AS MODIFY_DATE
+		from
+		tb_common_code
+		WHERE UPPER_COMMON_CODE Like '%${COMMON_CODE}%' AND
+		${searchKey} Like
+		'%${searchValue}%' AND
+		DELETE_YN != 'Y' order by
+		PERIOD
+	</select>
+
+	<insert id="registCode">
+		Insert into TB_COMMON_CODE (
+		COMMON_CODE,
+		UPPER_COMMON_CODE,
+		CODE_NAME,
+		CODE_DESCRIPTION,
+		USE_YN,
+		PERIOD,
+		DELETE_YN,
+		REGISTRANT,
+		REGIST_DATE,
+		MODIFIER,
+		MODIFY_DATE) VALUES
+		(#{COMMON_CODE},#{UPPER_COMMON_CODE},#{CODE_NAME},#{CODE_DESCRIPTION},#{USE_YN},#{PERIOD},#{DELETE_YN},#{REGISTRANT},sysdate,#{MODIFIER},sysdate)
+	</insert>
+
+	<insert id="registCodeSQ">
+		Insert into TB_COMMON_CODE (
+		COMMON_CODE,
+		UPPER_COMMON_CODE,
+		CODE_NAME,
+		CODE_DESCRIPTION,
+		USE_YN,
+		PERIOD,
+		DELETE_YN,
+		REGISTRANT,
+		REGIST_DATE,
+		MODIFIER,
+		MODIFY_DATE) VALUES
+		(CONCAT('${UPPER_COMMON_CODE}',${UPPER_COMMON_CODE}.NEXTVAL),#{UPPER_COMMON_CODE},#{CODE_NAME},#{CODE_DESCRIPTION},#{USE_YN},#{PERIOD},#{DELETE_YN},#{REGISTRANT},sysdate,#{MODIFIER},sysdate)
+	</insert>
+
+	<update id="updateCode" parameterType="com.cmn.service.CodeVO">
+		update tb_common_code set
+		code_name = #{CODE_NAME},
+		CODE_DESCRIPTION=#{CODE_DESCRIPTION},
+		USE_YN=#{USE_YN},
+		MODIFY_DATE = sysdate,
+		PERIOD = '${PERIOD}'
+		where
+		COMMON_CODE =
+		#{COMMON_CODE}
+	</update>
+
+	<update id="sort" parameterType="com.cmn.service.CodeVO">
+		update tb_common_code set
+		PERIOD
+		= #{PERIOD}
+		where
+		COMMON_CODE =
+		'${COMMON_CODE}'
+	</update>
+
+	<insert id="addSQ" parameterType="com.cmn.service.CodeVO">
+		CREATE SEQUENCE
+		${UPPER_COMMON_CODE}${COMMON_CODE}
+		START WITH 1
+		INCREMENT BY 1
+	</insert>
+
+	<delete id="deleteCode">
+		Delete TB_COMMON_CODE WHERE
+		COMMON_CODE=
+		#{COMMON_CODE}
+		OR
+		UPPER_COMMON_CODE= #{COMMON_CODE}
+	</delete>
+
+	<delete id="delSQ">
+		DROP SEQUENCE ${COMMON_CODE}
+	</delete>
+
+	<select id="getSQ" parameterType="com.cmn.service.CodeVO"
+		resultMap="code">SELECT ${UPPER_COMMON_CODE}.CURRVAL as COMMON_CODE FROM DUAL
+	</select>
+</mapper>	 

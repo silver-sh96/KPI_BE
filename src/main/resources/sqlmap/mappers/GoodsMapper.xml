@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cmn.service.impl.GoodsMapper">
+
+	<resultMap id="goods" type="com.cmn.service.GoodsVO">
+	</resultMap>
+	<resultMap id="codes" type="com.cmn.service.CodeVO">
+	</resultMap>
+	<resultMap id="tree" type="com.cmn.service.TreeVO">
+	</resultMap>
+
+	<select id="selectGoodsList"
+		parameterType="com.cmn.service.GoodsVO" resultMap="goods">
+		SELECT g.GOODS_CODE as
+		id,
+		g.GOODS_CODE,
+		c.code_name as ITEM_CATEGORY,
+		g.GOODS_NAME,
+		g.UNIT,
+		g.SPEC,
+		g.PURCHASE_COSE,
+		g.SELLING_PRICE,
+		g.REGISTRANT,
+		TO_CHAR(g.REGIST_DATE,'YYYY-MM-DD') AS
+		REGIST_DATE,
+		g.MODIFIER,
+		TO_CHAR(g.MODIFY_DATE,'YYYY-MM-DD') AS
+		MODIFY_DATE
+		FROM TB_GOODS g, TB_Common_code c
+		WHERE
+		c.common_code = '${ITEM_CATEGORY}' AND
+		g.GOODS_CODE LIKE
+		'%${GOODS_CODE}%' AND
+		g.GOODS_NAME
+		LIKE '%${GOODS_NAME}%'
+		AND
+		g.ITEM_CATEGORY =
+		'${ITEM_CATEGORY}' AND
+		g.UNIT LIKE '%${UNIT}%'
+		AND
+		g.SPEC LIKE '%${SPEC}%'
+		AND
+		g.PURCHASE_COSE >=
+		0${PURCHASE_COSE}
+		<if test="PURCHASE_COSE_E != ''">
+			AND g.PURCHASE_COSE &lt;= ${PURCHASE_COSE_E}
+		</if>
+		AND SELLING_PRICE >= 0${SELLING_PRICE}
+		<if test="SELLING_PRICE_E != ''">
+			AND g.SELLING_PRICE &lt;= ${SELLING_PRICE_E}
+		</if>
+	</select>
+
+	<select id="selectCGoodsList" resultMap="tree">
+		select Common_code as
+		key, CODE_Name as title, PERIOD from tb_common_code where
+		upper_common_code =
+		'IT' order by PERIOD
+	</select>
+
+	<select id="regiCategory"
+		parameterType="com.cmn.service.GoodsVO" resultMap="codes">
+		select * from
+		tb_common_code where COMMON_CODE = #{ITEM_CATEGORY} order by PERIOD
+	</select>
+
+	<insert id="registGoods" parameterType="com.cmn.service.GoodsVO">
+		Insert into TB_GOODS (
+		GOODS_CODE,
+		ITEM_CATEGORY,
+		GOODS_NAME,
+		UNIT,
+		SPEC,
+		SELLING_PRICE,
+		PURCHASE_COSE,
+		REGISTRANT,
+		MODIFIER,
+		REGIST_DATE,
+		MODIFY_DATE
+		) VALUES
+		(CONCAT('${CODENUM}',${CODE}.NEXTVAL) , #{ITEM_CATEGORY},
+		#{GOODS_NAME}, #{UNIT}, #{SPEC}, #{SELLING_PRICE}, #{PURCHASE_COSE},
+		#{REGISTRANT}, #{MODIFIER}, sysdate, sysdate)
+	</insert>
+
+	<update id="editGoods" parameterType="com.cmn.service.GoodsVO">
+		update TB_GOODS set
+		GOODS_NAME = #{GOODS_NAME},
+		UNIT = #{UNIT},
+		SPEC =
+		#{SPEC},
+		PURCHASE_COSE
+		= #{PURCHASE_COSE},
+		SELLING_PRICE =
+		#{SELLING_PRICE},
+		MODIFIER =
+		#{MODIFIER},
+		MODIFY_DATE = sysdate
+		where
+		GOODS_CODE =
+		#{GOODS_CODE}
+	</update>
+
+	<delete id="deleteGoods">
+		DELETE TB_GOODS WHERE GOODS_CODE = #{string}
+	</delete>
+
+
+
+</mapper>	 

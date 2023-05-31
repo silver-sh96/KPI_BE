@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+ <configuration>
+    <typeAliases>
+		<typeAlias alias="egovMap" type="egovframework.rte.psl.dataaccess.util.EgovMap"/>
+		<typeAlias alias="codeVo" type="com.cmn.service.CodeVO"/>
+		<typeAlias alias="goodsVo" type="com.cmn.service.GoodsVO"/>
+		<typeAlias alias="treeVo" type="com.cmn.service.TreeVO"/>
+		<typeAlias alias="comVo" type="com.crm.service.CompanyVO"/>
+		<typeAlias alias="charges" type="com.crm.service.ChargesVO"/>
+    </typeAliases>
+</configuration>
+
+

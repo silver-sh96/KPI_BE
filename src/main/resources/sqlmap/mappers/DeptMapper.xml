@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cmn.service.impl.DeptMapper">
+
+	<resultMap id="EmployeeResultMap" type="com.cmn.service.EmployeeVO">
+		<result property="id" 						column="EMPLOYEE_NUMBER"/>
+		<result property="employeeCompany" 			column="EMPLOYEE_COMPANY"/>
+		<result property="employeeId" 				column="EMPLOYEE_ID"/>
+		<result property="employeePw" 				column="EMPLOYEE_PW"/>
+		<result property="employeeFirstName" 		column="EMPLOYEE_FIRST_NAME"/>
+		<result property="employeeLastName" 		column="EMPLOYEE_LAST_NAME"/>
+		<result property="employeeDept" 			column="EMPLOYEE_DEPT"/>
+		<result property="employeeRank" 			column="EMPLOYEE_RANK"/>
+		<result property="employeePosition" 		column="EMPLOYEE_POSITION"/>
+		<result property="employeeStatus" 			column="EMPLOYEE_STATUS"/>
+		<result property="employeeAuthor" 			column="EMPLOYEE_AUTHOR"/>
+		<result property="employeePhone" 			column="EMPLOYEE_PHONE"/>
+		<result property="employeeLandLineNum" 		column="EMPLOYEE_LANDLINE_NUMBER"/>
+		<result property="employeeFullName" 		column="EMPLOYEE_FULL_NAME"/>
+		<result property="deptHeadYn" 				column="DEPTHEAD_YN"/>
+		<result property="registrant" 				column="REGISTRANT"/>
+		<result property="registDate" 				column="REGIST_DATE"/>
+		<result property="modifier" 				column="MODIFIER"/>
+		<result property="modifyDate" 				column="MODIFY_DATE"/>
+	</resultMap>
+	
+	<resultMap id="DeptResultMap" type="com.cmn.service.DeptVO">
+		<result property="deptCode" 		column="DEPT_CODE"/>
+		<result property="upperDeptCode" 	column="UPPER_DEPT_CODE"/>
+		<result property="deptName" 		column="DEPT_NAME"/>
+		<result property="remarks" 			column="REMARKS"/>
+		<result property="period" 			column="PERIOD"/>
+		<result property="workValue" 		column="WORK_VALUE"/>
+		<result property="useYN" 			column="USE_YN"/>
+		<result property="deleteYN" 		column="DELETE_YN"/>
+		<result property="registrant" 		column="REGISTRANT"/>
+		<result property="registDate" 		column="REGIST_DATE"/>
+		<result property="modifier" 		column="MODIFIER"/>
+		<result property="modifyDate" 		column="MODIFY_DATE"/>
+	</resultMap>
+	
+	<resultMap id="CodeResultMap" type="com.cmn.service.CodeVO">
+	</resultMap>
+
+	<select id="getDeptMember" resultMap="EmployeeResultMap">
+		-- 부서원 조회
+		SELECT
+			e.EMPLOYEE_NUMBER,
+			e.EMPLOYEE_COMPANY,
+			e.EMPLOYEE_PHONE,
+			e.EMPLOYEE_ID,
+			e.EMPLOYEE_LANDLINE_NUMBER,
+			e.EMPLOYEE_PW,
+			e.EMPLOYEE_FULL_NAME,
+			e.DEPTHEAD_YN,
+			dc.DEPT_NAME AS EMPLOYEE_DEPT,
+			e.EMPLOYEE_DEPT AS deptCode,
+			rc.CODE_NAME AS EMPLOYEE_RANK,
+			rc.REF1 AS ref,
+			rc.PERIOD AS period,
+			pc.CODE_NAME AS EMPLOYEE_POSITION,
+			sc.CODE_NAME AS EMPLOYEE_STATUS
+		FROM
+			TB_EMPLOYEE e
+        INNER JOIN
+            TB_DEPT dc
+        ON e.EMPLOYEE_DEPT = dc.DEPT_CODE
+        INNER JOIN
+            TB_COMMON_CODE rc
+        ON e.EMPLOYEE_RANK = rc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE pc
+        ON e.EMPLOYEE_POSITION = pc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE sc
+        ON e.EMPLOYEE_STATUS = sc.COMMON_CODE
+        WHERE e.EMPLOYEE_DEPT = #{dept}
+		ORDER BY (
+        CASE WHEN rc.COMMON_CODE = 'RK999' THEN 4
+        	 WHEN rc.CODE_DESCRIPTION = '공통직급' THEN 1
+             WHEN rc.CODE_DESCRIPTION = '일반사무' THEN 2
+             WHEN rc.CODE_DESCRIPTION = '연구직' THEN 3 END
+        ), rc.PERIOD
+	</select>
+	
+	<update id="changeDefault">
+		-- 부서장 초기화
+		UPDATE TB_EMPLOYEE
+		SET 
+			DEPTHEAD_YN = 'N',
+		    MODIFIER = #{modifier},
+		    MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE EMPLOYEE_DEPT = #{dept}
+	</update> 
+	
+	<update id="changeHead">
+		-- 부서장 변경
+		UPDATE TB_EMPLOYEE
+		SET 
+			DEPTHEAD_YN = 'Y',
+		    MODIFIER = #{modifier},
+		    MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE EMPLOYEE_NUMBER = #{head}
+	</update> 
+	
+	<select id="deptCodeDupleChk" parameterType="String" resultType="Integer">
+		-- 부서코드 중복조회
+		SELECT COUNT(*) result
+		FROM TB_DEPT
+		WHERE DEPT_CODE = #{deptCode}	
+	</select>
+	
+	<insert id="deptReg">
+		-- 부서 등록
+		INSERT INTO TB_DEPT(
+		    DEPT_CODE,
+			UPPER_DEPT_CODE,
+			DEPT_NAME,
+			REMARKS,
+			PERIOD,
+			WORK_VALUE,
+			USE_YN,
+			DELETE_YN,
+			REGISTRANT,
+			REGIST_DATE,
+			MODIFIER,
+			MODIFY_DATE
+		)VALUES(
+		    #{deptCode},
+		    #{upperDeptCode},
+		    #{deptName},
+		    #{remarks},
+		    #{period},
+		    #{workValue},
+		    'Y',
+		    'N',
+		    #{registrant},
+		    TRUNC(SYSDATE),
+		    #{registrant},
+		    TRUNC(SYSDATE)
+		)
+	</insert>
+	
+	<update id="deptModify">
+		-- 부서 수정
+		UPDATE TB_DEPT
+		    SET 
+			DEPT_NAME = #{deptName},
+			REMARKS = #{remarks},
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DEPT_CODE = #{deptCode}
+	</update>
+	
+	<update id="deptDelete">
+		-- 부서 삭제
+		UPDATE TB_DEPT
+		    SET 
+			DELETE_YN = 'Y',
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DEPT_CODE = #{deptCode}
+	</update>
+	
+	<update id="memberMove">
+		-- 부서원 이동
+		UPDATE TB_EMPLOYEE
+		    SET 
+			EMPLOYEE_DEPT = 'DP999',
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE EMPLOYEE_DEPT = #{deptCode}
+	</update>
+	
+	<update id="memberTransfer">
+		-- 부서 이동 (선택부서 부서원 추가)
+		UPDATE TB_EMPLOYEE
+		    SET 
+			EMPLOYEE_DEPT = #{dept},
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE EMPLOYEE_NUMBER = #{target}
+	</update>
+	
+	<update id="memberRemove">
+		-- 부서 이동 (선택부서 부서원 삭제)
+		UPDATE TB_EMPLOYEE
+		    SET 
+			EMPLOYEE_DEPT = #{dept},
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE EMPLOYEE_NUMBER = #{target}
+	</update>
+	
+	<select id="getDragUpperDept" parameterType="String" resultType="String">
+		-- dnd dragkey 상위부서 조회
+		SELECT
+			UPPER_DEPT_CODE
+		FROM TB_DEPT
+		WHERE DEPT_CODE = #{dragKey}
+	</select>
+	
+	<select id="getDropUpperDept" parameterType="String" resultType="String">
+		-- dnd dropkey 상위부서 조회
+		SELECT
+			UPPER_DEPT_CODE
+		FROM TB_DEPT
+		WHERE DEPT_CODE = #{dropKey}
+	</select>
+	
+	<select id="chkChildCnt" parameterType="String" resultType="Integer">
+		-- dnd 상위 부서가 같은 부서 간 dept 이동(하위부서 개수 cnt)
+		SELECT COUNT(*) result
+		FROM TB_DEPT
+		WHERE UPPER_DEPT_CODE = #{dropKey}	
+	</select>
+	
+	<update id="dndDeptMoveTarget">
+		-- dnd 상위 부서가 같은 부서 간 dept 이동(target 상위부서변경(하위부서X))
+		UPDATE TB_DEPT
+		    SET 
+			UPPER_DEPT_CODE = #{dropKey},
+			PERIOD = '0',
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DEPT_CODE = #{dragKey}
+	</update>
+	
+	<update id="dndDeptMoveTargetHaveChild">
+		-- dnd 상위 부서가 같은 부서 간 dept 이동(target 상위부서변경(하위부서O))
+		UPDATE TB_DEPT
+		    SET 
+			UPPER_DEPT_CODE = #{dropKey},
+			PERIOD = #{resultCheckChild},
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DEPT_CODE = #{dragKey}
+	</update>
+	
+	<update id="dndDeptMoveAnother">
+		-- dnd 상위 부서가 같은 부서 간 dept 이동(다른부서 우선순위 변경)
+		UPDATE TB_DEPT
+		    SET 
+			PERIOD = PERIOD - 1,
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE UPPER_DEPT_CODE = #{dragUpperDept}
+		  AND PERIOD <![CDATA[>]]> #{dragPosition}
+		  AND PERIOD != 99
+	</update>
+	
+	<update id="dndUnderMoveAnother">
+		-- dnd 하위로 이동(다른부서 우선순위 변경)
+		UPDATE TB_DEPT
+		    SET 
+			PERIOD = PERIOD - 1,
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE UPPER_DEPT_CODE = #{dragUpperDept}
+		  AND PERIOD <![CDATA[>]]> #{dragPosition}
+		  AND PERIOD <![CDATA[<]]> #{dropPosition}
+	</update>
+	
+	<update id="dndUnderMoveTarget">
+		-- dnd 하위로 이동(target 순서변경)
+		UPDATE TB_DEPT
+		    SET 
+			PERIOD = #{dropPosition}-1,
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DEPT_CODE = #{dragKey}
+	</update>
+	
+	<update id="dndOverMoveAnother">
+		-- dnd 상위로 이동(다른부서 우선순위 변경)
+		UPDATE TB_DEPT
+		    SET 
+			PERIOD = PERIOD + 1,
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE UPPER_DEPT_CODE = #{dragUpperDept}
+		  AND PERIOD <![CDATA[<]]> #{dragPosition}
+		  AND PERIOD <![CDATA[>=]]> #{dropPosition}
+	</update>
+	
+	<update id="dndOverMoveTarget">
+		-- dnd 상위로 이동(target 순서변경)
+		UPDATE TB_DEPT
+		    SET 
+			PERIOD = #{dropPosition},
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DEPT_CODE = #{dragKey}
+	</update>
+	
+	<update id="dndDiffDeptMoveAnother">
+		-- dnd 상위 부서가 다른 부서 간 dept 이동(다른부서 우선순위 변경)
+		UPDATE TB_DEPT
+		    SET 
+			PERIOD = PERIOD + 1,
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE UPPER_DEPT_CODE = #{dropUpperDept} 
+		  AND PERIOD <![CDATA[>=]]> #{dropPosition}
+		  AND PERIOD != 99
+	</update>
+	
+	<update id="dndDiffDeptMoveTarget">
+		-- dnd 상위 부서가 다른 부서 간 dept 이동(target 순서변경)
+		UPDATE TB_DEPT
+		    SET 
+			UPPER_DEPT_CODE = #{dropUpperDept},
+			PERIOD = #{dropPosition},
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE DEPT_CODE = #{dragKey}
+	</update>
+	
+	<update id="dndDiffDeptMoveOriginAnother">
+		-- dnd 상위 부서가 다른 부서 간 dept 이동(기존부서 우선순위 변경)
+		UPDATE TB_DEPT
+		    SET 
+			PERIOD = PERIOD - 1,
+			MODIFIER = #{modifier},
+			MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE UPPER_DEPT_CODE = #{dragUpperDept}
+		  AND PERIOD <![CDATA[>]]> #{dragPosition}
+		  AND PERIOD != 99
+	</update>
+
+</mapper>	 

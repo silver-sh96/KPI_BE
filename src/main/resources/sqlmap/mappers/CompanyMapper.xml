@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.crm.service.impl.CompanyMapper">
+
+	<resultMap id="comData" type="com.crm.service.CompanyVO">
+	</resultMap>
+	<resultMap id="comCharges" type="com.crm.service.ChargesVO">
+	</resultMap>
+
+	<select id="selectComList" resultMap="comData">
+		select
+		COMPANY_CODE as id,
+		COMPANY_CODE,
+		OURCOMPANY_YN,
+		COMPANY_NAME,
+		COMPANY_REPRESENTATIVE,
+		COMPANY_LICENSE_NUMBER,
+		COMPANY_CLASSIFICATION,
+		COMPANY_TAX_CLASSIFICATION,
+		COMPANY_REGISTRATION_NUMBER,
+		COMPANY_BUSINESS,
+		COMPANY_ITEMS,
+		INCOME_YN,
+		OUTCOME_YN,
+		COMPANY_ESTABLISHMENT,
+		COMPANY_HEAD_OFFICE,
+		COMPANY_POST,
+		COMPANY_FAX,
+		COMPANY_WEB,
+		COMPANY_TRADE_PERMISSION_STATE,
+		DELTET_YN,
+		COMPANY_STATUS,
+		REGISTRANT,
+		REGIST_DATE,
+		MODIFIER,
+		MODIFY_DATE
+		from tb_company where
+		COMPANY_NAME Like '%${COMPANY_NAME}%' AND
+		COMPANY_REPRESENTATIVE Like
+		'%${COMPANY_REPRESENTATIVE}%' AND
+		COMPANY_CLASSIFICATION Like
+		'%${COMPANY_CLASSIFICATION}%' AND
+		COMPANY_TAX_CLASSIFICATION Like
+		'%${COMPANY_TAX_CLASSIFICATION}%' AND
+		<if test="COMPANY_BUSINESS != ''">
+			COMPANY_BUSINESS Like '%${COMPANY_BUSINESS}%' AND
+		</if>
+		<if test="COMPANY_ITEMS != ''">
+			COMPANY_ITEMS Like '%${COMPANY_ITEMS}%' AND
+		</if>
+		COMPANY_TRADE_PERMISSION_STATE Like
+		'%${COMPANY_TRADE_PERMISSION_STATE}%' AND
+		COMPANY_STATUS Like
+		'%${COMPANY_STATUS}%'
+		<if test="INCOME_YN != ''">
+			<if test="OUTCOME_YN == ''">
+				AND INCOME_YN = #{INCOME_YN}
+			</if>
+			<if test="OUTCOME_YN != ''">
+				AND (INCOME_YN = #{INCOME_YN} OR OUTCOME_YN = #{OUTCOME_YN})
+			</if>
+		</if>
+		<if test="INCOME_YN == ''">
+			<if test="OUTCOME_YN != ''">
+				AND OUTCOME_YN = #{OUTCOME_YN}
+			</if>
+			<if test="OUTCOME_YN == ''">
+				AND INCOME_YN = '0' AND OUTCOME_YN = '0'
+			</if>
+		</if>
+
+	</select>
+
+	<select id="ComDetail" resultMap="comData"
+		parameterType="com.crm.service.CompanyVO">
+		select
+		COMPANY_CODE as id,
+		COMPANY_CODE,
+		OURCOMPANY_YN,
+		COMPANY_NAME,
+		COMPANY_REPRESENTATIVE,
+		COMPANY_LICENSE_NUMBER,
+		COMPANY_CLASSIFICATION,
+		COMPANY_TAX_CLASSIFICATION,
+		COMPANY_REGISTRATION_NUMBER,
+		COMPANY_BUSINESS,
+		COMPANY_ITEMS,
+		INCOME_YN,
+		OUTCOME_YN,
+		COMPANY_ESTABLISHMENT,
+		COMPANY_HEAD_OFFICE,
+		COMPANY_POST,
+		COMPANY_FAX,
+		COMPANY_WEB,
+		COMPANY_TRADE_PERMISSION_STATE,
+		DELTET_YN,
+		COMPANY_STATUS,
+		REGISTRANT,
+		REGIST_DATE,
+		MODIFIER,
+		MODIFY_DATE
+		from
+		tb_company where
+		COMPANY_CODE = #{COMPANY_CODE}
+	</select>
+
+	<select id="ComCharges" resultMap="comCharges"
+		parameterType="com.crm.service.CompanyVO">
+		select
+		COMPANY_CODE,
+		CHARGE_CODE,
+		FIRST_NAME,
+		LAST_NAME,
+		RANK,
+		EMAIL,
+		PHONE_NUMBER,
+		COMPANY_EXTENSION_NUMBER,
+		DELETE_YN,
+		REGISTRANT
+		as REGISTRAN,
+		REGIST_DATE,
+		MODIFIER,
+		MODIFY_DATE
+		from tb_company_charge
+		where COMPANY_CODE =
+		#{COMPANY_CODE}
+	</select>
+
+	<insert id="ComRegi" parameterType="com.crm.service.CompanyVO">
+		INSERT INTO tb_company (
+		COMPANY_CODE,
+		OURCOMPANY_YN,
+		COMPANY_NAME,
+		COMPANY_REPRESENTATIVE,
+		COMPANY_LICENSE_NUMBER,
+		COMPANY_CLASSIFICATION,
+		COMPANY_TAX_CLASSIFICATION,
+		COMPANY_REGISTRATION_NUMBER,
+		COMPANY_BUSINESS,
+		COMPANY_ITEMS,
+		INCOME_YN,
+		OUTCOME_YN,
+		COMPANY_ESTABLISHMENT,
+		COMPANY_HEAD_OFFICE,
+		COMPANY_POST,
+		COMPANY_FAX,
+		COMPANY_WEB,
+		COMPANY_TRADE_PERMISSION_STATE,
+		DELTET_YN,
+		COMPANY_STATUS,
+		REGISTRANT,
+		REGIST_DATE,
+		MODIFIER,
+		MODIFY_DATE) VALUES (
+		CONCAT('CPN',
+		CPN.NEXTVAL),
+		'${OURCOMPANY_YN}',
+		'${COMPANY_NAME}',
+		'${COMPANY_REPRESENTATIVE}',
+		'${COMPANY_LICENSE_NUMBER}',
+		'${COMPANY_CLASSIFICATION}',
+		'${COMPANY_TAX_CLASSIFICATION}',
+		'${COMPANY_REGISTRATION_NUMBER}',
+		'${COMPANY_BUSINESS}',
+		'${COMPANY_ITEMS}',
+		'${INCOME_YN}',
+		'${OUTCOME_YN}',
+		'${COMPANY_ESTABLISHMENT}',
+		'${COMPANY_HEAD_OFFICE}',
+		'${COMPANY_POST}',
+		'${COMPANY_FAX}',
+		'${COMPANY_WEB}',
+		'${COMPANY_TRADE_PERMISSION_STATE}',
+		'${DELTET_YN}',
+		'${COMPANY_STATUS}',
+		'${REGISTRANT}',
+		SYSDATE,
+		'${MODIFIER}',
+		SYSDATE)
+	</insert>
+
+	<select id="SQCompCode" resultMap="comData">
+		SELECT * FROM (
+		SELECT * FROM
+		tb_company ORDER BY MODIFY_DATE DESC
+		) WHERE ROWNUM = 1
+	</select>
+
+	<update id="ComEdit" parameterType="com.crm.service.ChargesVO">
+		update tb_company set
+		OURCOMPANY_YN=#{OURCOMPANY_YN},
+		COMPANY_NAME=#{COMPANY_NAME},
+		COMPANY_REPRESENTATIVE=#{COMPANY_REPRESENTATIVE},
+		COMPANY_LICENSE_NUMBER=#{COMPANY_LICENSE_NUMBER},
+		COMPANY_CLASSIFICATION=#{COMPANY_CLASSIFICATION},
+		COMPANY_TAX_CLASSIFICATION=#{COMPANY_TAX_CLASSIFICATION},
+		COMPANY_REGISTRATION_NUMBER=#{COMPANY_REGISTRATION_NUMBER},
+		COMPANY_BUSINESS=#{COMPANY_BUSINESS},
+		COMPANY_ITEMS=#{COMPANY_ITEMS},
+		INCOME_YN=#{INCOME_YN},
+		OUTCOME_YN=#{OUTCOME_YN},
+		COMPANY_ESTABLISHMENT=#{COMPANY_ESTABLISHMENT},
+		COMPANY_HEAD_OFFICE=#{COMPANY_HEAD_OFFICE},
+		COMPANY_POST=#{COMPANY_POST},
+		COMPANY_FAX=#{COMPANY_FAX},
+		COMPANY_WEB=#{COMPANY_WEB},
+		COMPANY_TRADE_PERMISSION_STATE=#{COMPANY_TRADE_PERMISSION_STATE},
+		DELTET_YN=#{DELTET_YN},
+		COMPANY_STATUS=#{COMPANY_STATUS},
+		MODIFIER=#{MODIFIER},
+		MODIFY_DATE = sysdate
+		where
+		COMPANY_CODE =
+		#{COMPANY_CODE}
+	</update>
+
+	<delete id="ComDel">
+		delete from tb_company where COMPANY_CODE=
+		#{COMPANY_CODE}
+	</delete>
+
+	<delete id="ComDelChargesAll">
+		delete from tb_company_charge where COMPANY_CODE=
+		#{COMPANY_CODE}
+	</delete>
+
+	<select id="SQCompDel" resultMap="comData">
+		SELECT SEQUENCE_NAME as
+		DELTET_YN
+		FROM
+		ALL_SEQUENCES
+		WHERE SEQUENCE_NAME = '${COMPANY_CODE}'
+
+	</select>
+
+	<delete id="SQDrop">
+		Drop SEQUENCE ${COMPANY_CODE}
+	</delete>
+
+
+
+	<select id="SQComp" parameterType="com.crm.service.ChargesVO">
+		CREATE SEQUENCE
+		${COMPANY_CODE}
+		INCREMENT BY 1
+		START WITH 1
+		MINVALUE 1
+		MAXVALUE 9999
+	</select>
+
+	<select id="SQCompView" resultMap="comCharges"
+		parameterType="com.crm.service.ChargesVO">
+		SELECT SEQUENCE_NAME as LAST_NAME
+		FROM ALL_SEQUENCES
+		WHERE SEQUENCE_NAME LIKE '${COMPANY_CODE}%'
+
+	</select>
+
+	<insert id="ChargeRegi"
+		parameterType="com.crm.service.ChargesVO">
+		INSERT INTO tb_company_charge (
+		COMPANY_CODE,
+		CHARGE_CODE,
+		MODIFIER,
+		REGISTRANT ,
+		REGIST_DATE,
+		MODIFY_DATE
+		)
+		VALUES (
+		#{COMPANY_CODE},
+		CONCAT('${COMPANY_CODE}_IMP',
+		${COMPANY_CODE}.NEXTVAL),
+		#{MODIFIER},
+		#{REGISTRAN},
+		sysdate,
+		sysdate
+		)
+	</insert>
+
+	<update id="ChargeEdit"
+		parameterType="com.crm.service.ChargesVO">
+		update tb_company_charge set
+		${FIELD}=#{VALUE},
+		MODIFIER=#{MODIFIER}
+		where
+		CHARGE_CODE =
+		#{CHARGE_CODE}
+	</update>
+
+	<delete id="ChargeDel">
+		Delete from tb_company_charge where CHARGE_CODE =
+		#{CHARGE_CODE}
+	</delete>
+
+</mapper>

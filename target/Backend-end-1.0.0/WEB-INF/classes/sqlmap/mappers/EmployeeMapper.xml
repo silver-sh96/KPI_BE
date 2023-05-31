@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cmn.service.impl.EmployeeMapper">
+	
+	<resultMap id="CodeResultMap" type="com.cmn.service.CodeVO">
+	</resultMap>
+	
+	<resultMap id="DeptResultMap" type="com.cmn.service.DeptVO">
+		<result property="deptCode" 		column="DEPT_CODE"/>
+		<result property="upperDeptCode" 	column="UPPER_DEPT_CODE"/>
+		<result property="deptName" 		column="DEPT_NAME"/>
+		<result property="remarks" 			column="REMARKS"/>
+		<result property="period" 			column="PERIOD"/>
+		<result property="workValue" 		column="WORK_VALUE"/>
+		<result property="useYN" 			column="USE_YN"/>
+		<result property="deleteYn" 		column="DELETE_YN"/>
+		<result property="registrant" 		column="REGISTRANT"/>
+		<result property="registDate" 		column="REGIST_DATE"/>
+		<result property="modifier" 		column="MODIFIER"/>
+		<result property="modifyDate" 		column="MODIFY_DATE"/>
+	</resultMap>
+	
+	<resultMap id="EmployeeResultMap" type="com.cmn.service.EmployeeVO">
+		<result property="id" 						column="EMPLOYEE_NUMBER"/>
+		<result property="employeeCompany" 			column="EMPLOYEE_COMPANY"/>
+		<result property="employeeId" 				column="EMPLOYEE_ID"/>
+		<result property="employeePw" 				column="EMPLOYEE_PW"/>
+		<result property="employeeFirstName" 		column="EMPLOYEE_FIRST_NAME"/>
+		<result property="employeeLastName" 		column="EMPLOYEE_LAST_NAME"/>
+		<result property="employeeDept" 			column="EMPLOYEE_DEPT"/>
+		<result property="employeeRank" 			column="EMPLOYEE_RANK"/>
+		<result property="employeePosition" 		column="EMPLOYEE_POSITION"/>
+		<result property="employeeStatus" 			column="EMPLOYEE_STATUS"/>
+		<result property="employeeAuthor" 			column="EMPLOYEE_AUTHOR"/>
+		<result property="employeePhone" 			column="EMPLOYEE_PHONE"/>
+		<result property="employeeHomePhone" 		column="EMPLOYEE_HOME_PHONE"/>
+		<result property="employeeLandLineNum" 		column="EMPLOYEE_LANDLINE_NUMBER"/>
+		<result property="employeeFullName" 		column="EMPLOYEE_FULL_NAME"/>
+		<result property="deptHeadYn" 				column="DEPTHEAD_YN"/>
+		<result property="registrant" 				column="REGISTRANT"/>
+		<result property="registDate" 				column="REGIST_DATE"/>
+		<result property="modifier" 				column="MODIFIER"/>
+		<result property="modifyDate" 				column="MODIFY_DATE"/>
+	</resultMap>
+	
+	<select id="getDeptList" resultMap="DeptResultMap">
+		-- 부서 목록 조회
+		SELECT
+			*
+		FROM
+			TB_DEPT
+		WHERE DELETE_YN != 'Y'
+		ORDER BY PERIOD, DEPT_NAME
+	</select> 
+	
+	<select id="getRankList" resultMap="CodeResultMap">
+		-- 직급 목록 조회
+		SELECT
+			*
+		FROM
+			TB_COMMON_CODE
+		WHERE UPPER_COMMON_CODE = 'RK'
+			  AND DELETE_YN != 'Y'
+		ORDER BY COMMON_CODE DESC
+	</select> 
+	
+	<select id="getPositionList" resultMap="CodeResultMap">
+		-- 직책 목록 조회
+		SELECT
+			*
+		FROM
+			TB_COMMON_CODE
+		WHERE UPPER_COMMON_CODE = 'PT'
+			  AND DELETE_YN != 'Y'
+		ORDER BY COMMON_CODE DESC
+	</select> 
+	
+	<select id="getStatusList" resultMap="CodeResultMap">
+		-- 재직상태 목록 조회
+		SELECT
+			*
+		FROM
+			TB_COMMON_CODE
+		WHERE UPPER_COMMON_CODE = 'ES'
+			  AND DELETE_YN != 'Y'
+		ORDER BY COMMON_CODE
+	</select> 
+
+	<select id="getEmployeeList" resultMap="EmployeeResultMap">
+		-- 사원 목록 조회
+		SELECT
+			e.EMPLOYEE_NUMBER,
+			e.EMPLOYEE_COMPANY,
+			e.EMPLOYEE_FULL_NAME,
+			e.EMPLOYEE_ID,
+			e.DEPTHEAD_YN,
+			dc.DEPT_NAME AS EMPLOYEE_DEPT,
+			e.EMPLOYEE_DEPT AS deptCode,
+			rc.CODE_NAME AS EMPLOYEE_RANK,
+			pc.CODE_NAME AS EMPLOYEE_POSITION,
+			sc.CODE_NAME AS EMPLOYEE_STATUS
+		FROM
+			TB_EMPLOYEE e
+        INNER JOIN
+            TB_DEPT dc
+        ON e.EMPLOYEE_DEPT = dc.DEPT_CODE
+        INNER JOIN
+            TB_COMMON_CODE rc
+        ON e.EMPLOYEE_RANK = rc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE pc
+        ON e.EMPLOYEE_POSITION = pc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE sc
+        ON e.EMPLOYEE_STATUS = sc.COMMON_CODE
+		ORDER BY e.EMPLOYEE_NUMBER
+	</select> 
+	
+	<insert id="employeeReg">
+		-- 사원 등록
+		INSERT INTO TB_EMPLOYEE(
+		    EMPLOYEE_NUMBER,
+			EMPLOYEE_COMPANY,
+			EMPLOYEE_ID,
+			EMPLOYEE_PW,
+			EMPLOYEE_FIRST_NAME,
+			EMPLOYEE_LAST_NAME,
+			EMPLOYEE_DEPT,
+			EMPLOYEE_RANK,
+			EMPLOYEE_POSITION,
+			EMPLOYEE_STATUS,
+			EMPLOYEE_AUTHOR,
+			EMPLOYEE_PHONE,
+			EMPLOYEE_HOME_PHONE,
+			EMPLOYEE_LANDLINE_NUMBER,
+			EMPLOYEE_FULL_NAME,
+			REGISTRANT,
+			REGIST_DATE,
+			MODIFIER,
+			MODIFY_DATE
+		)VALUES(
+		    #{id},
+		    #{employeeCompany},
+		    #{employeeId},
+		    #{employeePw},
+		    #{employeeFirstName},
+		    #{employeeLastName},
+		    #{employeeDept},
+		    #{employeeRank},
+		    #{employeePosition},
+		    'ES000',
+		    '일반사용자',
+		    #{employeePhone},
+		    #{employeeHomePhone},
+		    #{employeeLandLineNum},
+		    #{employeeFirstName} || #{employeeLastName},
+		    '관리자',
+		    TRUNC(SYSDATE),
+		    '관리자',
+		    TRUNC(SYSDATE)
+		)
+	</insert>
+	
+	<select id="getModifyInfo" resultMap="EmployeeResultMap">
+		-- 수정 사원 정보 조회
+		SELECT
+			*
+		FROM
+			TB_EMPLOYEE
+		WHERE EMPLOYEE_NUMBER = #{id}
+	</select>
+	
+	<update id="employeeModify">
+		-- 사원 수정
+		UPDATE TB_EMPLOYEE
+		SET 
+			EMPLOYEE_COMPANY = #{employeeCompany},
+		    EMPLOYEE_PW = #{employeePw},
+		    EMPLOYEE_FIRST_NAME = #{employeeFirstName},
+		    EMPLOYEE_LAST_NAME = #{employeeLastName},
+		    EMPLOYEE_DEPT = #{employeeDept},
+		    EMPLOYEE_RANK = #{employeeRank},
+		    EMPLOYEE_POSITION = #{employeePosition},
+		    EMPLOYEE_STATUS = #{employeeStatus},
+		    EMPLOYEE_PHONE = #{employeePhone},
+		    EMPLOYEE_HOME_PHONE = #{employeeHomePhone},
+		    EMPLOYEE_LANDLINE_NUMBER = #{employeeLandLineNum},
+		    EMPLOYEE_FULL_NAME = #{employeeFirstName} || #{employeeLastName},
+		    MODIFIER = '관리자',
+		    MODIFY_DATE = TRUNC(SYSDATE)
+		WHERE EMPLOYEE_NUMBER = #{id}
+	</update>
+	
+	<update id="employeeDelete">
+		-- 사원 삭제
+		UPDATE TB_EMPLOYEE
+		SET 
+		    EMPLOYEE_STATUS = 'ES003'
+		WHERE EMPLOYEE_NUMBER = #{id}
+	</update>
+	
+	<select id="idDupleCheck" parameterType="String" resultType="Integer">
+		-- 아이디 중복검사
+		SELECT COUNT(*) result
+		FROM TB_EMPLOYEE
+		WHERE EMPLOYEE_ID = #{employeeId}	
+	</select>
+	
+	<!-- <select id="getSearchList" resultMap="EmployeeResultMap">
+		 기존 사원 검색
+		SELECT
+			e.EMPLOYEE_NUMBER,
+			e.EMPLOYEE_COMPANY,
+			e.EMPLOYEE_FULL_NAME,
+			e.EMPLOYEE_ID,
+			e.DEPTHEAD_YN,
+			dc.CODE_NAME AS EMPLOYEE_DEPT,
+			e.EMPLOYEE_DEPT AS deptCode,
+			rc.CODE_NAME AS EMPLOYEE_RANK,
+			pc.CODE_NAME AS EMPLOYEE_POSITION,
+			sc.CODE_NAME AS EMPLOYEE_STATUS
+		FROM
+			TB_EMPLOYEE e
+        INNER JOIN
+            TB_COMMON_CODE dc
+        ON e.EMPLOYEE_DEPT = dc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE rc
+        ON e.EMPLOYEE_RANK = rc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE pc
+        ON e.EMPLOYEE_POSITION = pc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE sc
+        ON e.EMPLOYEE_STATUS = sc.COMMON_CODE
+        WHERE ${key} LIKE '%' || #{value} || '%'
+		ORDER BY EMPLOYEE_NUMBER
+	</select>  -->
+	
+	<select id="getSearchList" resultMap="EmployeeResultMap">
+		-- 사원 검색
+		SELECT
+			e.EMPLOYEE_NUMBER,
+			e.EMPLOYEE_COMPANY,
+			e.EMPLOYEE_FULL_NAME,
+			e.EMPLOYEE_ID,
+			e.DEPTHEAD_YN,
+			dc.DEPT_NAME AS EMPLOYEE_DEPT,
+			e.EMPLOYEE_DEPT AS deptCode,
+			rc.CODE_NAME AS EMPLOYEE_RANK,
+			pc.CODE_NAME AS EMPLOYEE_POSITION,
+			sc.CODE_NAME AS EMPLOYEE_STATUS
+		FROM
+			TB_EMPLOYEE e
+        INNER JOIN
+            TB_DEPT dc
+        ON e.EMPLOYEE_DEPT = dc.DEPT_CODE
+        INNER JOIN
+            TB_COMMON_CODE rc
+        ON e.EMPLOYEE_RANK = rc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE pc
+        ON e.EMPLOYEE_POSITION = pc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE sc
+        ON e.EMPLOYEE_STATUS = sc.COMMON_CODE
+        WHERE 
+        	e.EMPLOYEE_COMPANY LIKE '%' || #{cp} || '%' AND
+        	e.EMPLOYEE_DEPT LIKE '%' || #{dp} || '%' AND
+        	e.EMPLOYEE_RANK LIKE '%' || #{rk} || '%' AND
+        	e.EMPLOYEE_NUMBER LIKE '%' || #{id} || '%' AND
+        	e.EMPLOYEE_FULL_NAME LIKE '%' || #{nm} || '%' AND
+        	e.EMPLOYEE_STATUS LIKE '%' || #{st} || '%'
+		ORDER BY rc.PERIOD, e.EMPLOYEE_NUMBER
+	</select> 
+	
+	<select id="getTargetInfo" resultMap="EmployeeResultMap">
+		-- target 정보 조회
+		SELECT
+			e.EMPLOYEE_NUMBER,
+			e.EMPLOYEE_COMPANY,
+			e.EMPLOYEE_FIRST_NAME,
+			e.EMPLOYEE_LAST_NAME,
+			e.EMPLOYEE_FULL_NAME,
+			e.EMPLOYEE_ID,
+			e.EMPLOYEE_PW,
+			e.EMPLOYEE_PHONE,
+			e.EMPLOYEE_HOME_PHONE,
+			e.EMPLOYEE_DEPT AS deptCode,
+			e.EMPLOYEE_RANK AS rankCode,
+			e.EMPLOYEE_POSITION AS positionCode,
+			e.EMPLOYEE_STATUS AS statusCode,
+			e.EMPLOYEE_LANDLINE_NUMBER,
+			dc.DEPT_NAME AS EMPLOYEE_DEPT,
+			rc.CODE_NAME AS EMPLOYEE_RANK,
+			pc.CODE_NAME AS EMPLOYEE_POSITION,
+			sc.CODE_NAME AS EMPLOYEE_STATUS
+		FROM
+			TB_EMPLOYEE e
+        INNER JOIN
+            TB_DEPT dc
+        ON e.EMPLOYEE_DEPT = dc.DEPT_CODE
+        INNER JOIN
+            TB_COMMON_CODE rc
+        ON e.EMPLOYEE_RANK = rc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE pc
+        ON e.EMPLOYEE_POSITION = pc.COMMON_CODE
+        INNER JOIN
+            TB_COMMON_CODE sc
+        ON e.EMPLOYEE_STATUS = sc.COMMON_CODE
+        WHERE EMPLOYEE_NUMBER = #{id}
+	</select> 
+
+</mapper>	 
